@@ -1,0 +1,21 @@
+{
+	"name": "quest-schedule-exporter",
+	"type": "module",
+	"version": "0.0.1",
+	"scripts": {
+		"dev": "astro dev",
+		"build": "astro build",
+		"preview": "astro build && wrangler dev",
+		"astro": "astro",
+		"deploy": "astro build && wrangler deploy",
+		"cf-typegen": "wrangler types"
+	},
+	"dependencies": {
+		"@astrojs/cloudflare": "^12.6.12",
+		"astro": "^5.16.9"
+	},
+	"devDependencies": {
+		"@types/node": "^25.0.9",
+		"wrangler": "^4.59.2"
+	}
+}

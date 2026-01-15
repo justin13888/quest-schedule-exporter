@@ -16,3 +16,11 @@ bun dev
 - Build production site: `bun build`
 - Preview production site: `bun preview`
 - Deploy to Cloudflare: `bun run deploy`
+
+## Credits
+
+I used to use this [tool](https://web.archive.org/web/20250609135711/https://schedule.wattools.ca/) for multiple years until it stopped working. So I decided to give it a fresh face and handle much stricter input validation. If there are any issues or suggestions, please feel free to open an issue or submit a PR.
+
+## License
+
+This project is licensed under MPL-2.0. See [LICENSE](LICENSE) for details.

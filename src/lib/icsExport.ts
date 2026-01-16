@@ -1,4 +1,5 @@
 import { generateIcsCalendar, type IcsCalendar, type IcsEvent } from "ts-ics";
+import type { DateRange } from "@/lib/parser";
 import type { Course, ParsedSchedule } from "@/lib/schema";
 
 /**
@@ -43,10 +44,7 @@ function parseDays(daysStr: string): string[] {
 /**
  * Parse time string like "4:00PM - 5:20PM" to start/end Date objects
  */
-function parseTimeRange(
-    timeStr: string,
-    baseDate: Date,
-): { start: Date; end: Date } | null {
+function parseTimeRange(timeStr: string, baseDate: Date): DateRange | null {
     if (timeStr === "TBA" || !timeStr.includes("-")) return null;
 
     const [startStr, endStr] = timeStr.split(" - ").map((s) => s.trim());

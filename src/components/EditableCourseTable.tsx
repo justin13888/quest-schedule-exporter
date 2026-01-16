@@ -1,8 +1,8 @@
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
+import { parseUserDateRange } from "@/lib/parser";
 import type { ClassSession, Course, ParsedSchedule } from "@/lib/schema";
-import { parseDateRange } from "@/lib/parser";
 
 interface EditableCourseTableProps {
     schedule: ParsedSchedule | null;
@@ -290,56 +290,73 @@ export const EditableCourseTable: React.FC<EditableCourseTableProps> = ({
                                                     />
                                                 </td>
                                                 <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">
-                                                    <EditableCell
-                                                        title={`${session.startDate.toLocaleDateString(
-                                                            "en-US",
-                                                            {
-                                                                month: "long",
-                                                                day: "numeric",
-                                                                year: "numeric",
-                                                            },
-                                                        )} - ${session.endDate.toLocaleDateString(
-                                                            "en-US",
-                                                            {
-                                                                month: "long",
-                                                                day: "numeric",
-                                                                year: "numeric",
-                                                            },
-                                                        )}`}
-                                                        value={`${session.startDate.toLocaleDateString(
-                                                            "en-US",
-                                                            {
-                                                                month: "2-digit",
-                                                                day: "2-digit",
-                                                                year: "numeric",
-                                                            },
-                                                        )} - ${session.endDate.toLocaleDateString(
-                                                            "en-US",
-                                                            {
-                                                                month: "2-digit",
-                                                                day: "2-digit",
-                                                                year: "numeric",
-                                                            },
-                                                        )}`}
-                                                        onChange={(v) => {
-                                                            const range =
-                                                                parseDateRange(
-                                                                    v,
-                                                                );
-                                                            if (range) {
-                                                                updateSession(
-                                                                    courseIdx,
-                                                                    sessionIdx,
+                                                    {(() => {
+                                                        const formatDateString =
+                                                            (date: Date) => {
+                                                                return date.toLocaleDateString(
+                                                                    undefined,
                                                                     {
-                                                                        startDate:
-                                                                            range.start,
-                                                                        endDate:
-                                                                            range.end,
+                                                                        month: "2-digit",
+                                                                        day: "2-digit",
+                                                                        year: "numeric",
                                                                     },
                                                                 );
-                                                            }
-                                                        }}
-                                                    />
+                                                            };
+                                                        const [
+                                                            startEndDateString,
+                                                            setStartEndDateString,
+                                                            // biome-ignore lint/correctness/useHookAtTopLevel: Much more concise doing inline.
+                                                        ] = useState(
+                                                            `${formatDateString(session.startDate)} - ${formatDateString(session.endDate)}`,
+                                                        );
+
+                                                        return (
+                                                            <EditableCell
+                                                                title={`${session.startDate.toLocaleDateString(
+                                                                    undefined,
+                                                                    {
+                                                                        month: "long",
+                                                                        day: "numeric",
+                                                                        year: "numeric",
+                                                                    },
+                                                                )} - ${session.endDate.toLocaleDateString(
+                                                                    undefined,
+                                                                    {
+                                                                        month: "long",
+                                                                        day: "numeric",
+                                                                        year: "numeric",
+                                                                    },
+                                                                )}`}
+                                                                value={
+                                                                    startEndDateString
+                                                                }
+                                                                onChange={(
+                                                                    v,
+                                                                ) => {
+                                                                    const range =
+                                                                        parseUserDateRange(
+                                                                            v,
+                                                                        );
+                                                                    if (range) {
+                                                                        // If able to parse, update session and update value
+                                                                        updateSession(
+                                                                            courseIdx,
+                                                                            sessionIdx,
+                                                                            {
+                                                                                startDate:
+                                                                                    range.start,
+                                                                                endDate:
+                                                                                    range.end,
+                                                                            },
+                                                                        );
+                                                                        setStartEndDateString(
+                                                                            `${formatDateString(range.start)} - ${formatDateString(range.end)}`,
+                                                                        );
+                                                                    }
+                                                                }}
+                                                            />
+                                                        );
+                                                    })()}
                                                 </td>
                                             </tr>
                                         ),

@@ -1,11 +1,11 @@
 import type { Course, CourseStatus, ParsedSchedule, TermInfo } from "./schema";
 
+export type DateRange = { start: Date; end: Date };
+
 /**
- * Parse date range like "05/01/2026 - 06/04/2026"
+ * Parse date range from Quest (DD/MM/YYYY) like "05/01/2026 - 06/04/2026"
  */
-export function parseDateRange(
-    dateStr: string,
-): { start: Date; end: Date } | null {
+function parseQuestDateRange(dateStr: string): DateRange | null {
     const parts = dateStr.split(" - ").map((s) => s.trim());
     if (parts.length !== 2) return null;
 
@@ -14,14 +14,30 @@ export function parseDateRange(
         if (!match) return null;
         return new Date(
             Number.parseInt(match[3], 10),
-            Number.parseInt(match[1], 10) - 1,
-            Number.parseInt(match[2], 10),
+            Number.parseInt(match[2], 10) - 1, // Month is 2nd group
+            Number.parseInt(match[1], 10), // Day is 1st group
         );
     };
 
     const start = parseDate(parts[0]);
     const end = parseDate(parts[1]);
     if (!start || !end) return null;
+
+    return { start, end };
+}
+
+/**
+ * Parse date range from User Input (Locale dependent-ish)
+ */
+export function parseUserDateRange(dateStr: string): DateRange | null {
+    const parts = dateStr.split(" - ").map((s) => s.trim());
+    if (parts.length !== 2) return null;
+
+    const start = new Date(parts[0]);
+    const end = new Date(parts[1]);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()))
+        return null;
 
     return { start, end };
 }
@@ -169,7 +185,7 @@ export function parseSchedule(input: string): ParsedSchedule {
                 // Section is usually 3 digits (001) or similar.
                 // Component is uppercase 3-4 chars (LEC, TUT).
                 if (section.length <= 5 && /^[A-Z]{3,4}$/.test(component)) {
-                    const dateRange = parseDateRange(dates);
+                    const dateRange = parseQuestDateRange(dates);
                     if (dateRange) {
                         currentCourse.sessions?.push({
                             classNumber,

@@ -1,5 +1,31 @@
 import type { Course, CourseStatus, ParsedSchedule, TermInfo } from "./schema";
 
+/**
+ * Parse date range like "05/01/2026 - 06/04/2026"
+ */
+export function parseDateRange(
+    dateStr: string,
+): { start: Date; end: Date } | null {
+    const parts = dateStr.split(" - ").map((s) => s.trim());
+    if (parts.length !== 2) return null;
+
+    const parseDate = (str: string): Date | null => {
+        const match = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!match) return null;
+        return new Date(
+            Number.parseInt(match[3], 10),
+            Number.parseInt(match[1], 10) - 1,
+            Number.parseInt(match[2], 10),
+        );
+    };
+
+    const start = parseDate(parts[0]);
+    const end = parseDate(parts[1]);
+    if (!start || !end) return null;
+
+    return { start, end };
+}
+
 export class ParserError extends Error {
     constructor(message: string) {
         super(message);
@@ -143,15 +169,23 @@ export function parseSchedule(input: string): ParsedSchedule {
                 // Section is usually 3 digits (001) or similar.
                 // Component is uppercase 3-4 chars (LEC, TUT).
                 if (section.length <= 5 && /^[A-Z]{3,4}$/.test(component)) {
-                    currentCourse.sessions?.push({
-                        classNumber,
-                        section,
-                        component,
-                        daysAndTimes,
-                        room,
-                        instructor,
-                        startEndDates: dates,
-                    });
+                    const dateRange = parseDateRange(dates);
+                    if (dateRange) {
+                        currentCourse.sessions?.push({
+                            classNumber,
+                            section,
+                            component,
+                            daysAndTimes,
+                            room,
+                            instructor,
+                            startDate: dateRange.start,
+                            endDate: dateRange.end,
+                        });
+                    } else {
+                        console.warn(
+                            `Invalid date range for session ${classNumber} in course ${currentCourse.courseCode}: ${dates}`,
+                        );
+                    }
 
                     // Advance index to skip these lines
                     i += 6;

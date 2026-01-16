@@ -32,7 +32,8 @@ export const ClassSessionSchema = z.object({
     daysAndTimes: z.string(),
     room: z.string(),
     instructor: z.string(),
-    startEndDates: z.string(),
+    startDate: z.date(),
+    endDate: z.date(),
 });
 export type ClassSession = z.infer<typeof ClassSessionSchema>;
 

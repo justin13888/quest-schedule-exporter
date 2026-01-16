@@ -2,6 +2,7 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
 import type { ClassSession, Course, ParsedSchedule } from "@/lib/schema";
+import { parseDateRange } from "@/lib/parser";
 
 interface EditableCourseTableProps {
     schedule: ParsedSchedule | null;
@@ -13,6 +14,7 @@ interface EditableCellProps {
     onChange: (value: string) => void;
     className?: string;
     type?: "text" | "number";
+    title?: string;
 }
 
 const EditableCell: React.FC<EditableCellProps> = ({
@@ -20,6 +22,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
     onChange,
     className = "",
     type = "text",
+    title,
 }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(value);
@@ -72,7 +75,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
             type="button"
             onClick={() => setIsEditing(true)}
             className={`cursor-pointer hover:bg-blue-50 px-1 py-0.5 rounded transition-colors text-left w-full ${className}`}
-            title="Click to edit"
+            title={title || "Click to edit"}
         >
             {value || <span className="text-gray-400 italic">empty</span>}
         </button>
@@ -288,19 +291,54 @@ export const EditableCourseTable: React.FC<EditableCourseTableProps> = ({
                                                 </td>
                                                 <td className="px-4 py-2.5 text-xs text-gray-500 whitespace-nowrap">
                                                     <EditableCell
-                                                        value={
-                                                            session.startEndDates
-                                                        }
-                                                        onChange={(v) =>
-                                                            updateSession(
-                                                                courseIdx,
-                                                                sessionIdx,
-                                                                {
-                                                                    startEndDates:
-                                                                        v,
-                                                                },
-                                                            )
-                                                        }
+                                                        title={`${session.startDate.toLocaleDateString(
+                                                            "en-US",
+                                                            {
+                                                                month: "long",
+                                                                day: "numeric",
+                                                                year: "numeric",
+                                                            },
+                                                        )} - ${session.endDate.toLocaleDateString(
+                                                            "en-US",
+                                                            {
+                                                                month: "long",
+                                                                day: "numeric",
+                                                                year: "numeric",
+                                                            },
+                                                        )}`}
+                                                        value={`${session.startDate.toLocaleDateString(
+                                                            "en-US",
+                                                            {
+                                                                month: "2-digit",
+                                                                day: "2-digit",
+                                                                year: "numeric",
+                                                            },
+                                                        )} - ${session.endDate.toLocaleDateString(
+                                                            "en-US",
+                                                            {
+                                                                month: "2-digit",
+                                                                day: "2-digit",
+                                                                year: "numeric",
+                                                            },
+                                                        )}`}
+                                                        onChange={(v) => {
+                                                            const range =
+                                                                parseDateRange(
+                                                                    v,
+                                                                );
+                                                            if (range) {
+                                                                updateSession(
+                                                                    courseIdx,
+                                                                    sessionIdx,
+                                                                    {
+                                                                        startDate:
+                                                                            range.start,
+                                                                        endDate:
+                                                                            range.end,
+                                                                    },
+                                                                );
+                                                            }
+                                                        }}
                                                     />
                                                 </td>
                                             </tr>

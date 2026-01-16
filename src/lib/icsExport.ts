@@ -74,30 +74,6 @@ function parseTimeRange(
 }
 
 /**
- * Parse date range like "05/01/2026 - 06/04/2026"
- */
-function parseDateRange(dateStr: string): { start: Date; end: Date } | null {
-    const parts = dateStr.split(" - ").map((s) => s.trim());
-    if (parts.length !== 2) return null;
-
-    const parseDate = (str: string): Date | null => {
-        const match = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-        if (!match) return null;
-        return new Date(
-            Number.parseInt(match[3], 10),
-            Number.parseInt(match[1], 10) - 1,
-            Number.parseInt(match[2], 10),
-        );
-    };
-
-    const start = parseDate(parts[0]);
-    const end = parseDate(parts[1]);
-    if (!start || !end) return null;
-
-    return { start, end };
-}
-
-/**
  * Apply template placeholders
  */
 function applyTemplate(
@@ -135,13 +111,10 @@ export function generateScheduleIcs(
                 continue;
             }
 
-            const dateRange = parseDateRange(session.startEndDates);
-            if (!dateRange) {
-                warnings.push(
-                    `Skipped ${course.courseCode} (${session.component}): Invalid date range "${session.startEndDates}"`,
-                );
-                continue;
-            }
+            const dateRange = {
+                start: session.startDate,
+                end: session.endDate,
+            };
 
             // Extract days and time from "TTh 4:00PM - 5:20PM"
             const dayTimeMatch =

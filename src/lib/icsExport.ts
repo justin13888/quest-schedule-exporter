@@ -1,74 +1,24 @@
 import { generateIcsCalendar, type IcsCalendar, type IcsEvent } from "ts-ics";
-import type { DateRange } from "@/lib/parser";
+import { parseDaysAndTimes, type WeekDays } from "@/lib/parser";
 import type { Course, ParsedSchedule } from "@/lib/schema";
 
 /**
- * Parse day abbreviations to day names for ICS
+ * Convert WeekDays object to ICS day codes
  */
-function parseDays(daysStr: string): string[] {
-    const dayMap: Record<string, string> = {
-        M: "MO",
-        T: "TU",
-        W: "WE",
-        Th: "TH",
-        F: "FR",
-        S: "SA",
-        Su: "SU",
-    };
+function getIcsDays(
+    days: WeekDays,
+): ("MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU")[] {
+    const icsDays: ("MO" | "TU" | "WE" | "TH" | "FR" | "SA" | "SU")[] = [];
 
-    const days: string[] = [];
+    if (days.monday) icsDays.push("MO");
+    if (days.tuesday) icsDays.push("TU");
+    if (days.wednesday) icsDays.push("WE");
+    if (days.thursday) icsDays.push("TH");
+    if (days.friday) icsDays.push("FR");
+    if (days.saturday) icsDays.push("SA");
+    if (days.sunday) icsDays.push("SU");
 
-    // Handle patterns like "TTh", "MWF", etc.
-    let i = 0;
-    while (i < daysStr.length) {
-        // Check for two-char patterns first (Th, Su)
-        if (i + 1 < daysStr.length) {
-            const twoChar = daysStr.slice(i, i + 2);
-            if (dayMap[twoChar]) {
-                days.push(dayMap[twoChar]);
-                i += 2;
-                continue;
-            }
-        }
-        // Single char
-        const oneChar = daysStr[i];
-        if (dayMap[oneChar]) {
-            days.push(dayMap[oneChar]);
-        }
-        i++;
-    }
-
-    return days;
-}
-
-/**
- * Parse time string like "4:00PM - 5:20PM" to start/end Date objects
- */
-function parseTimeRange(timeStr: string, baseDate: Date): DateRange | null {
-    if (timeStr === "TBA" || !timeStr.includes("-")) return null;
-
-    const [startStr, endStr] = timeStr.split(" - ").map((s) => s.trim());
-
-    const parseTime = (str: string, date: Date): Date => {
-        const match = str.match(/^(\d{1,2}):(\d{2})(AM|PM)$/i);
-        if (!match) return date;
-
-        let hours = Number.parseInt(match[1], 10);
-        const minutes = Number.parseInt(match[2], 10);
-        const isPM = match[3].toUpperCase() === "PM";
-
-        if (isPM && hours !== 12) hours += 12;
-        if (!isPM && hours === 12) hours = 0;
-
-        const result = new Date(date);
-        result.setHours(hours, minutes, 0, 0);
-        return result;
-    };
-
-    return {
-        start: parseTime(startStr, baseDate),
-        end: parseTime(endStr, baseDate),
-    };
+    return icsDays;
 }
 
 /**
@@ -101,51 +51,38 @@ export function generateScheduleIcs(
 
     for (const course of schedule.courses) {
         for (const session of course.sessions) {
-            // Skip TBA sessions
-            if (session.daysAndTimes === "TBA") {
-                warnings.push(
-                    `Skipped ${course.courseCode} (${session.component}): Time is TBA`,
-                );
-                continue;
-            }
-
             const dateRange = {
                 start: session.startDate,
                 end: session.endDate,
             };
 
-            // Extract days and time from "TTh 4:00PM - 5:20PM"
-            const dayTimeMatch =
-                session.daysAndTimes.match(/^([A-Za-z]+)\s+(.+)$/);
-            if (!dayTimeMatch) {
-                warnings.push(
-                    `Skipped ${course.courseCode} (${session.component}): Could not parse days and times "${session.daysAndTimes}"`,
-                );
+            // Parse schedule pattern
+            const pattern = parseDaysAndTimes(session.daysAndTimes);
+            if (!pattern) {
+                // If it's just TBA, we skip silently or warn? Existing logic was warn if TBA or fail to parse.
+                if (session.daysAndTimes === "TBA") {
+                    warnings.push(
+                        `Skipped ${course.courseCode} (${session.component}): Time is TBA`,
+                    );
+                } else {
+                    warnings.push(
+                        `Skipped ${course.courseCode} (${session.component}): Could not parse days and times "${session.daysAndTimes}"`,
+                    );
+                }
                 continue;
             }
 
-            const daysStr = dayTimeMatch[1];
-            const timeStr = dayTimeMatch[2];
-
-            const days = parseDays(daysStr);
+            const days = getIcsDays(pattern.days);
             if (days.length === 0) {
                 warnings.push(
-                    `Skipped ${course.courseCode} (${session.component}): No valid days found in "${daysStr}"`,
-                );
-                continue;
-            }
-
-            const timeRange = parseTimeRange(timeStr, dateRange.start);
-            if (!timeRange) {
-                warnings.push(
-                    `Skipped ${course.courseCode} (${session.component}): Could not parse time range "${timeStr}"`,
+                    `Skipped ${course.courseCode} (${session.component}): No valid days found in "${session.daysAndTimes}"`,
                 );
                 continue;
             }
 
             // Find the first occurrence (first day in the range that matches)
             const firstDay = dateRange.start;
-            const dayOfWeek = firstDay.getDay();
+            const dayOfWeek = firstDay.getDay(); // 0=Sun, 1=Mon...
             const dayIndexMap: Record<string, number> = {
                 SU: 0,
                 MO: 1,
@@ -156,8 +93,6 @@ export function generateScheduleIcs(
                 SA: 6,
             };
 
-            // Find the first matching day
-            const eventStart = new Date(timeRange.start);
             let minDaysAhead = 7;
             for (const day of days) {
                 const targetDay = dayIndexMap[day];
@@ -166,13 +101,28 @@ export function generateScheduleIcs(
                     minDaysAhead = daysAhead;
                 }
             }
+
+            const eventStart = new Date(dateRange.start);
             eventStart.setDate(eventStart.getDate() + minDaysAhead);
+            eventStart.setHours(
+                pattern.startTime.hour,
+                pattern.startTime.minute,
+                0,
+                0,
+            );
 
             const eventEnd = new Date(eventStart);
             eventEnd.setHours(
-                timeRange.end.getHours(),
-                timeRange.end.getMinutes(),
+                pattern.endTime.hour,
+                pattern.endTime.minute,
+                0,
+                0,
             );
+
+            // If end time is before start time (e.g. crossing midnight), add 1 day
+            if (eventEnd < eventStart) {
+                eventEnd.setDate(eventEnd.getDate() + 1);
+            }
 
             const event: IcsEvent = {
                 uid: `${course.courseCode}-${session.classNumber}@quest-exporter`,

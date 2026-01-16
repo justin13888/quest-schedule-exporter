@@ -225,3 +225,204 @@ export function parseSchedule(input: string): ParsedSchedule {
         courses,
     };
 }
+
+export type Hour =
+    | 0
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9
+    | 10
+    | 11
+    | 12
+    | 13
+    | 14
+    | 15
+    | 16
+    | 17
+    | 18
+    | 19
+    | 20
+    | 21
+    | 22
+    | 23;
+export type Minute =
+    | 0
+    | 1
+    | 2
+    | 3
+    | 4
+    | 5
+    | 6
+    | 7
+    | 8
+    | 9
+    | 10
+    | 11
+    | 12
+    | 13
+    | 14
+    | 15
+    | 16
+    | 17
+    | 18
+    | 19
+    | 20
+    | 21
+    | 22
+    | 23
+    | 24
+    | 25
+    | 26
+    | 27
+    | 28
+    | 29
+    | 30
+    | 31
+    | 32
+    | 33
+    | 34
+    | 35
+    | 36
+    | 37
+    | 38
+    | 39
+    | 40
+    | 41
+    | 42
+    | 43
+    | 44
+    | 45
+    | 46
+    | 47
+    | 48
+    | 49
+    | 50
+    | 51
+    | 52
+    | 53
+    | 54
+    | 55
+    | 56
+    | 57
+    | 58
+    | 59;
+
+export interface Time {
+    hour: Hour;
+    minute: Minute;
+}
+
+export interface WeekDays {
+    monday: boolean;
+    tuesday: boolean;
+    wednesday: boolean;
+    thursday: boolean;
+    friday: boolean;
+    saturday: boolean;
+    sunday: boolean;
+}
+
+export interface SchedulePattern {
+    days: WeekDays;
+    startTime: Time;
+    endTime: Time;
+}
+
+/**
+ * Parses "Days Time - Time" string (e.g. "TTh 4:00PM - 5:20PM")
+ */
+export function parseDaysAndTimes(input: string): SchedulePattern | null {
+    if (!input || input === "TBA") return null;
+
+    // 1. Separate Days from Time Range
+    // "M 4:00PM - ..." or "TTh 2:30PM - ..."
+    // Regex: Starts with letters, then space, then rest
+    const match = input.match(/^([A-Za-z]+)\s+(.+)$/);
+    if (!match) return null;
+
+    const daysStr = match[1];
+    const timeStr = match[2];
+
+    // 2. Parse Days
+    const days: WeekDays = {
+        monday: false,
+        tuesday: false,
+        wednesday: false,
+        thursday: false,
+        friday: false,
+        saturday: false,
+        sunday: false,
+    };
+
+    let i = 0;
+    while (i < daysStr.length) {
+        // Look ahead for "Th" or "Su"
+        if (i + 1 < daysStr.length) {
+            const pair = daysStr.slice(i, i + 2);
+            if (pair === "Th") {
+                days.thursday = true;
+                i += 2;
+                continue;
+            }
+            if (pair === "Su") {
+                days.sunday = true;
+                i += 2;
+                continue;
+            }
+        }
+
+        const char = daysStr[i];
+        switch (char) {
+            case "M":
+                days.monday = true;
+                break;
+            case "T":
+                days.tuesday = true;
+                break;
+            case "W":
+                days.wednesday = true;
+                break;
+            case "F":
+                days.friday = true;
+                break;
+            case "S":
+                days.saturday = true;
+                break;
+        }
+        i++;
+    }
+
+    // 3. Parse Times
+    const parts = timeStr.split("-").map((s) => s.trim());
+    if (parts.length !== 2) return null;
+
+    const parseTime = (t: string): Time | null => {
+        const timeMatch = t.match(/^(\d{1,2}):(\d{2})(AM|PM)$/i);
+        if (!timeMatch) return null;
+
+        let hour = Number.parseInt(timeMatch[1], 10);
+        const minute = Number.parseInt(timeMatch[2], 10);
+        const isPM = timeMatch[3].toUpperCase() === "PM";
+
+        if (isPM && hour !== 12) hour += 12;
+        if (!isPM && hour === 12) hour = 0;
+
+        // `hour and `minute` are guaranteed to be integers so we only need to check bounds
+        if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+
+        return { hour: hour as Hour, minute: minute as Minute };
+    };
+
+    const startTime = parseTime(parts[0]);
+    const endTime = parseTime(parts[1]);
+
+    if (!startTime || !endTime) return null;
+
+    return { days, startTime, endTime };
+}

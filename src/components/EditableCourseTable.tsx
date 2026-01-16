@@ -1,7 +1,11 @@
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { StatusBadge } from "@/components/StatusBadge";
-import { parseUserDateRange } from "@/lib/parser";
+import {
+    type SchedulePattern,
+    parseDaysAndTimes,
+    parseUserDateRange,
+} from "@/lib/parser";
 import type { ClassSession, Course, ParsedSchedule } from "@/lib/schema";
 
 interface EditableCourseTableProps {
@@ -87,6 +91,32 @@ export const EditableCourseTable: React.FC<EditableCourseTableProps> = ({
     onScheduleChange,
 }) => {
     if (!schedule) return null;
+
+    const getScheduleTooltip = (daysAndTimes: string): string => {
+        const pattern: SchedulePattern | null = parseDaysAndTimes(daysAndTimes);
+        if (!pattern)
+            return "Invalid format. Expected: 'Days Time - Time' (e.g. TTh 4:00PM - 5:20PM)";
+
+        const formatTime = (time: { hour: number; minute: number }): string => {
+            const date = new Date();
+            date.setHours(time.hour, time.minute);
+            return date.toLocaleTimeString(undefined, {
+                hour: "numeric",
+                minute: "2-digit",
+            });
+        };
+
+        const days: string[] = [];
+        if (pattern.days.monday) days.push("Monday");
+        if (pattern.days.tuesday) days.push("Tuesday");
+        if (pattern.days.wednesday) days.push("Wednesday");
+        if (pattern.days.thursday) days.push("Thursday");
+        if (pattern.days.friday) days.push("Friday");
+        if (pattern.days.saturday) days.push("Saturday");
+        if (pattern.days.sunday) days.push("Sunday");
+
+        return `${formatTime(pattern.startTime)} - ${formatTime(pattern.endTime)} on ${days.join(", ")}`;
+    };
 
     const updateCourse = (courseIdx: number, updates: Partial<Course>) => {
         const newCourses = [...schedule.courses];
@@ -258,6 +288,9 @@ export const EditableCourseTable: React.FC<EditableCourseTableProps> = ({
                                                                 },
                                                             )
                                                         }
+                                                        title={getScheduleTooltip(
+                                                            session.daysAndTimes,
+                                                        )}
                                                     />
                                                 </td>
                                                 <td className="px-4 py-2.5 text-gray-600">

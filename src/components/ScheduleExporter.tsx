@@ -16,6 +16,11 @@ export const ScheduleExporter = () => {
     const [descriptionTemplate, setDescriptionTemplate] = useState(
         "@code-@section: @name (@type) in @location with @prof",
     );
+    const [exportWarnings, setExportWarnings] = useState<string[]>([]);
+    const [pendingExport, setPendingExport] = useState<{
+        content: string;
+        filename: string;
+    } | null>(null);
 
     const hasInitialized = useRef(false);
 
@@ -73,23 +78,31 @@ export const ScheduleExporter = () => {
                 descriptionTemplate,
             );
 
-            if (warnings.length > 0) {
-                const message =
-                    "The following sessions were excluded from the export:\n\n" +
-                    warnings.map((w) => `• ${w}`).join("\n") +
-                    "\n\nDo you want to continue downloading the schedule?";
+            const filename = `schedule_${schedule.term.season.toLocaleLowerCase()}_${schedule.term.year}.ics`;
 
-                if (!window.confirm(message)) {
-                    return;
-                }
+            if (warnings.length > 0) {
+                setExportWarnings(warnings);
+                setPendingExport({ content: icsContent, filename });
+                return;
             }
 
-            const filename = `schedule_${schedule.term.season.toLocaleLowerCase()}_${schedule.term.year}.ics`;
             downloadIcs(icsContent, filename);
         } catch (err) {
             console.error("Failed to generate ICS:", err);
             setError("Failed to generate calendar file. Please try again.");
         }
+    };
+
+    const confirmExport = () => {
+        if (pendingExport) {
+            downloadIcs(pendingExport.content, pendingExport.filename);
+        }
+        cancelExport();
+    };
+
+    const cancelExport = () => {
+        setExportWarnings([]);
+        setPendingExport(null);
     };
 
     const handleReset = () => {
@@ -318,6 +331,69 @@ export const ScheduleExporter = () => {
                         Possible placeholders: @code, @section, @name, @type,
                         @location, @prof
                     </p>
+                </div>
+            )}
+
+            {/* Warning Dialog */}
+            {exportWarnings.length > 0 && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-xs">
+                    <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <div className="p-6 space-y-4">
+                            <div className="flex gap-3 text-amber-600">
+                                <svg
+                                    className="h-6 w-6 shrink-0"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="1.5"
+                                    stroke="currentColor"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
+                                    />
+                                </svg>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 leading-6">
+                                        Export Warnings
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Some sessions cannot be exported because
+                                        they have missing or invalid data.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-amber-50 rounded-lg p-3 max-h-60 overflow-y-auto border border-amber-100">
+                                <ul className="list-disc list-inside space-y-1 text-sm text-amber-900">
+                                    {exportWarnings.map((warning, i) => (
+                                        <li key={i}>{warning}</li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <p className="text-sm text-gray-600">
+                                Do you want to proceed with the export anyway?
+                            </p>
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end border-t border-gray-100">
+                            <button
+                                type="button"
+                                onClick={cancelExport}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-200 transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmExport}
+                                className="px-4 py-2 text-sm font-medium text-white bg-amber-600 rounded-lg hover:bg-amber-700 focus:ring-2 focus:ring-amber-500/20 shadow-sm transition-all"
+                            >
+                                Proceed Export
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

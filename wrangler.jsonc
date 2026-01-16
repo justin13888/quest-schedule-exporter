@@ -5,18 +5,12 @@
 {
     "$schema": "node_modules/wrangler/config-schema.json",
     "name": "quest-schedule-exporter",
-    "main": "./dist/_worker.js/index.js",
     "compatibility_date": "2025-09-27",
     "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-    "assets": {
-        "binding": "ASSETS",
-        "directory": "./dist"
-    },
+    "pages_build_output_dir": "./dist",
     "observability": {
         "enabled": true
     },
-    "workers_dev": true,
-    "preview_urls": true,
     "routes": [
         {
             "pattern": "qse.justinchung.net",

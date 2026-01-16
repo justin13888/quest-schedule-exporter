@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { downloadIcs, generateScheduleIcs } from "../lib/icsExport";
-import { parseSchedule } from "../lib/parser";
-import type { ParsedSchedule } from "../lib/schema";
-import { decodeScheduleFromUrl, encodeScheduleToUrl } from "../lib/urlState";
-import { EditableCourseTable } from "./EditableCourseTable";
+import { EditableCourseTable } from "@/components/EditableCourseTable";
+import { downloadIcs, generateScheduleIcs } from "@/lib/icsExport";
+import { parseSchedule } from "@/lib/parser";
+import type { ParsedSchedule } from "@/lib/schema";
+import { decodeScheduleFromUrl, encodeScheduleToUrl } from "@/lib/urlState";
 
 export const ScheduleExporter = () => {
     const [input, setInput] = useState("");

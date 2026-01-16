@@ -1,8 +1,7 @@
 import type React from "react";
 import { useEffect, useRef, useState } from "react";
-import type { ClassSession, Course, ParsedSchedule } from "../lib/schema";
-
-import { StatusBadge } from "./StatusBadge";
+import { StatusBadge } from "@/components/StatusBadge";
+import type { ClassSession, Course, ParsedSchedule } from "@/lib/schema";
 
 interface EditableCourseTableProps {
     schedule: ParsedSchedule | null;

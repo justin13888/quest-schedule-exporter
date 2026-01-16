@@ -1,5 +1,5 @@
 import { generateIcsCalendar, type IcsCalendar, type IcsEvent } from "ts-ics";
-import type { Course, ParsedSchedule } from "./schema";
+import type { Course, ParsedSchedule } from "@/lib/schema";
 
 /**
  * Parse day abbreviations to day names for ICS
@@ -251,10 +251,7 @@ export function generateScheduleIcs(
 /**
  * Trigger browser download of ICS file
  */
-export function downloadIcs(
-    icsContent: string,
-    filename: string,
-): void {
+export function downloadIcs(icsContent: string, filename: string): void {
     const blob = new Blob([icsContent], {
         type: "text/calendar",
     });

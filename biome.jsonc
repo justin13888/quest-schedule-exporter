@@ -6,6 +6,7 @@
         "useIgnoreFile": true
     },
     "files": {
+        "includes": ["**", "!worker-configuration.d.ts"],
         "ignoreUnknown": false
     },
     "formatter": {
@@ -24,6 +25,11 @@
             "quoteStyle": "double"
         }
     },
+    "css": {
+        "parser": {
+            "tailwindDirectives": true
+        }
+    },
     "assist": {
         "enabled": true,
         "actions": {
@@ -31,5 +37,18 @@
                 "organizeImports": "on"
             }
         }
-    }
+    },
+    "overrides": [
+        {
+            "includes": ["**/*.astro"],
+            "linter": {
+                "rules": {
+                    "correctness": {
+                        "noUnusedImports": "off",
+                        "noUnusedVariables": "off"
+                    }
+                }
+            }
+        }
+    ]
 }

@@ -99,7 +99,7 @@ export function parseSchedule(input: string): ParsedSchedule {
                     // Try to consume more if they look correct
                     if (i + 2 < lines.length) {
                         const unitsVal = parseFloat(lines[i + 2]);
-                        if (!isNaN(unitsVal)) {
+                        if (!Number.isNaN(unitsVal)) {
                             currentCourse.units = unitsVal;
                             i += 2; // Advanced past status and units
 
@@ -157,12 +157,11 @@ export function parseSchedule(input: string): ParsedSchedule {
                     i += 6;
                 }
             }
-            continue;
         }
     }
 
     // Push final course
-    if (currentCourse && currentCourse.courseCode) {
+    if (currentCourse?.courseCode) {
         courses.push(currentCourse as Course);
     }
 

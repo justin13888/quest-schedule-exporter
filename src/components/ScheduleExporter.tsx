@@ -16,7 +16,9 @@ export const ScheduleExporter = () => {
     const [descriptionTemplate, setDescriptionTemplate] = useState(
         "@code-@section: @name (@type) in @location with @prof",
     );
-    const [exportWarnings, setExportWarnings] = useState<string[]>([]);
+    const [exportWarnings, setExportWarnings] = useState<
+        { id: string; message: string }[]
+    >([]);
     const [pendingExport, setPendingExport] = useState<{
         content: string;
         filename: string;
@@ -81,7 +83,12 @@ export const ScheduleExporter = () => {
             const filename = `schedule_${schedule.term.season.toLocaleLowerCase()}_${schedule.term.year}.ics`;
 
             if (warnings.length > 0) {
-                setExportWarnings(warnings);
+                setExportWarnings(
+                    warnings.map((w, i) => ({
+                        id: `${i}-${Date.now()}`,
+                        message: w,
+                    })),
+                );
                 setPendingExport({ content: icsContent, filename });
                 return;
             }
@@ -367,8 +374,10 @@ export const ScheduleExporter = () => {
 
                             <div className="bg-amber-50 rounded-lg p-3 max-h-60 overflow-y-auto border border-amber-100">
                                 <ul className="list-disc list-inside space-y-1 text-sm text-amber-900">
-                                    {exportWarnings.map((warning, i) => (
-                                        <li key={i}>{warning}</li>
+                                    {exportWarnings.map((warning) => (
+                                        <li key={warning.id}>
+                                            {warning.message}
+                                        </li>
                                     ))}
                                 </ul>
                             </div>

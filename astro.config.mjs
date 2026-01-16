@@ -8,6 +8,7 @@ import tsconfigPaths from "vite-tsconfig-paths";
 
 // https://astro.build/config
 export default defineConfig({
+    site: "https://qse.justinchung.net",
     adapter: cloudflare({
         platformProxy: {
             enabled: true,

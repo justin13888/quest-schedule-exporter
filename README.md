@@ -15,7 +15,7 @@ bun dev
 
 - Build production site: `bun build`
 - Preview production site: `bun preview`
-- Deploy to Cloudflare: `bun run deploy`
+- Deploy to Cloudflare: `bun run deploy` (after running prod build)
 
 ## Credits
 

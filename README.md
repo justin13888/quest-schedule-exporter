@@ -13,9 +13,9 @@ bun dev
 
 ### Other Commands
 
-- Build production site: `bun build`
+- Build production site: `bun run build`
 - Preview production site: `bun preview`
-- Deploy to Cloudflare: `bun run deploy` (after running prod build)
+- Deploy to Cloudflare: `bun run deploy`
 
 ## Credits
 

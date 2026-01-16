@@ -9,7 +9,7 @@
         "lint:fix": "biome check --write",
         "preview": "astro build && wrangler dev",
         "astro": "astro",
-        "deploy": "astro build && wrangler deploy",
+        "deploy": "bun run build && wrangler deploy",
         "cf-typegen": "wrangler types"
     },
     "dependencies": {

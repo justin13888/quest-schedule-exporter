@@ -1,5 +1,7 @@
 # Quest Schedule Exporter
 
+[![Cloudflare Pages](https://img.shields.io/cloudflare/pages/quest-schedule-exporter)](https://quest-schedule-exporter.pages.dev/)
+
 This is a web app that takes in your course schedule from University of Waterloo's Quest and exports it as ICS.
 
 ## Development
